@@ -61,11 +61,11 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
-tutorialRoutes(app);
+// tutorialRoutes(app);
 
-db.sequelize.sync()
-  .then(() => console.log("Synced db."))
-  .catch(err => console.error("DB sync error:", err));
+// db.sequelize.sync()
+//   .then(() => console.log("Synced db."))
+//   .catch(err => console.error("DB sync error:", err));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, "0.0.0.0", () => {
