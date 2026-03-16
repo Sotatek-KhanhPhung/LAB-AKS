@@ -11,9 +11,6 @@ pool:
 
 variables:
   - group: frontend-variables
-  # trong variable group có:
-  # azure_static_web_apps_api_token
-  # VITE_API_BASE_URL
 
 steps:
 - checkout: self
