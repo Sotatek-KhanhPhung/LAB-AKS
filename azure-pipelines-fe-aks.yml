@@ -1,0 +1,57 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - frontend/*
+      - frontend/**/*
+
+pool:
+  name: default
+
+variables:
+  STORAGE_ACCOUNT_NAME: 'storageaccountwebfe'
+  FRONTEND_DIR: frontend
+  BUILD_OUTPUT: frontend/dist
+
+steps:
+- checkout: self
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: Use Node.js
+
+- script: |
+    cd $(FRONTEND_DIR)
+    npm ci
+    npm run build
+  displayName: Build frontend
+
+- task: AzureCLI@2
+  displayName: Upload build to $web via private endpoint
+  inputs:
+    azureSubscription: 'service-connection-aks-lab'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      set -e
+
+      echo "Testing DNS resolution..."
+      nslookup $(STORAGE_ACCOUNT_NAME).blob.core.windows.net || true
+
+      echo "Uploading files to \$web ..."
+      az storage blob upload-batch \
+        --account-name $(STORAGE_ACCOUNT_NAME) \
+        --destination '$web' \
+        --source $(BUILD_OUTPUT) \
+        --overwrite \
+        --auth-mode login
+
+      echo "Listing uploaded files..."
+      az storage blob list \
+        --account-name $(STORAGE_ACCOUNT_NAME) \
+        --container-name '$web' \
+        --auth-mode login \
+        --output table
