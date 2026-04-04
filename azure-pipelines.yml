@@ -40,19 +40,28 @@ steps:
 #   displayName: Update GitOps repo                     
 
 - script: |
-      echo "Clone repo"
+    set -e
 
-      git clone https://github.com/Sotatek-KhanhPhung/LAB-AKS-BE-gitops.git
-      cd LAB-AKS-BE-gitops
+    echo "Clone repo"
+    git clone https://$(GITOPS_PAT)@github.com/Sotatek-KhanhPhung/LAB-AKS-BE-gitops.git
+    cd LAB-AKS-BE-gitops
 
-      echo "Update image"
-      sed -i "s|image:.*|image: $(containerRegistry)/$(IMAGE_NAME):$(Build.BuildId)|g" deployment.yaml
+    git config user.email "azuredevops@local"
+    git config user.name "azure-pipeline"
 
-      git config user.email "azuredevops@local"
-      git config user.name "azure-pipeline"
+    echo "Set remote with PAT"
+    git remote set-url origin https://$(GITOPS_PAT)@github.com/Sotatek-KhanhPhung/LAB-AKS-BE-gitops.git
 
-      git add .
-      git commit -m "Update image $(Build.BuildId)"
+    echo "Update image"
+    sed -i "s|image:.*|image: $(containerRegistry)/$(imageRepository):$(Build.BuildId)|g" k8s/backend/deployment.yaml
 
-      echo "Push with PAT"
-      git -c http.extraHeader="Authorization: Bearer $(GITOPS_PAT)" push
+    git add k8s/backend/deployment.yaml
+
+    if git diff --cached --quiet; then
+      echo "No changes to commit"
+      exit 0
+    fi
+
+    git commit -m "Update backend image to $(Build.BuildId)"
+    git push origin main
+  displayName: Update GitOps repo
