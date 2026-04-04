@@ -23,18 +23,36 @@ steps:
       $(Build.BuildId)
       latest
 
+# - script: |
+#     set -e
+
+#     git config --global user.email "azuredevops@local"
+#     git config --global user.name "azure-pipeline"
+
+#     git clone https://github.com/Sotatek-KhanhPhung/LAB-AKS-BE-gitops.git gitops
+#     cd gitops
+
+#     sed -i "s#image: .*#image: $(containerRegistry)/$(imageRepository):$(Build.BuildId)#" k8s/backend/deployment.yaml
+
+#     git add k8s/backend/deployment.yaml
+#     git commit -m "Update backend image to $(Build.BuildId)"
+#     git -c http.extraHeader="Authorization: Bearer $(GITOPS_PAT)" push origin main
+#   displayName: Update GitOps repo                     
+
 - script: |
-    set -e
+      echo "Clone repo"
 
-    git config --global user.email "azuredevops@local"
-    git config --global user.name "azure-pipeline"
+      git clone https://github.com/Sotatek-KhanhPhung/LAB-AKS-BE-gitops.git
+      cd LAB-AKS-BE-gitops
 
-    git clone https://github.com/Sotatek-KhanhPhung/LAB-AKS-BE-gitops.git gitops
-    cd gitops
+      echo "Update image"
+      sed -i "s|image:.*|image: $(containerRegistry)/$(IMAGE_NAME):$(Build.BuildId)|g" deployment.yaml
 
-    sed -i "s#image: .*#image: $(containerRegistry)/$(imageRepository):$(Build.BuildId)#" k8s/backend/deployment.yaml
+      git config user.email "azuredevops@local"
+      git config user.name "azure-pipeline"
 
-    git add k8s/backend/deployment.yaml
-    git commit -m "Update backend image to $(Build.BuildId)"
-    git -c http.extraHeader="Authorization: Bearer $(GITOPS_PAT)" push origin main
-  displayName: Update GitOps repo                     
+      git add .
+      git commit -m "Update image $(Build.BuildId)"
+
+      echo "Push with PAT"
+      git -c http.extraHeader="Authorization: Bearer $(GITOPS_PAT)" push
