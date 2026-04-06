@@ -7,25 +7,31 @@ const app = express();
 
 const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
   .split(",")
-  .map(x => x.trim());
+  .map((x) => x.trim())
+  .filter(Boolean);
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // allow requests without origin (curl, postman)
+  origin(origin, callback) {
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error("CORS not allowed: " + origin));
+    return callback(new Error(`CORS not allowed: ${origin}`));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
+
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl} | Origin: ${req.headers.origin || "N/A"}`);
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -40,11 +46,14 @@ app.get("/health", (req, res) => {
 
 tutorialRoutes(app);
 
-db.sequelize.sync()
+db.sequelize
+  .sync()
   .then(() => console.log("Synced db."))
-  .catch(err => console.error("DB sync error:", err));
+  .catch((err) => console.error("DB sync error:", err));
 
 const PORT = process.env.PORT || 8080;
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log("Allowed CORS origins:", allowedOrigins);
 });
