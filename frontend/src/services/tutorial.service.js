@@ -1,10 +1,13 @@
 import axios from "axios";
  
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://api.abcmntxyz.online/";
+
 const http = axios.create({
-    baseURL: "/api",
-    headers: {
-        "Content-Type": "application/json",
-    },
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
  
 const getAll = () => {
